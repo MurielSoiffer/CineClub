@@ -1,0 +1,8 @@
+package com.proyect.cineclub.repository;
+
+import com.proyect.cineclub.entity.Usuario;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UsuarioRepository extends JpaRepository<Usuario,Long> {
+    Usuario findByUsername(String username);
+}

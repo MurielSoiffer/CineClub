@@ -1,0 +1,26 @@
+services:
+#  app:
+#    image: cineclub:latest
+#    restart: always
+#    environment:
+#      PASSWORD_DB: mypassword
+#      USER_DB: myuser
+#      PASSWORD_SE: 1234
+#      HOST_DB: db:5432
+#    ports:
+#      - "8080:8080"
+#    depends_on:
+#      - db
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: mydatabase-cineClub
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    volumes:
+      - db_data_2:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+volumes:
+  db_data_2: {}
