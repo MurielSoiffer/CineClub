@@ -28,6 +28,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 //                        .requestMatchers("/peliculas/**","/salas/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/peliculas/**","/swagger-ui.html","/swagger-ui/index.html").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/funiones/**").hasAuthority("ADMIN")
                         .requestMatchers("/usuarios/**","/api/peliculas/**","/api/salas/**","/api/funiones/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated())
                 .formLogin(form -> form
