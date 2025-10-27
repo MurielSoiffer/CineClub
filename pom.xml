@@ -29,6 +29,8 @@
 	<properties>
 		<java.version>21</java.version>
         <mockito.version>5.14.0</mockito.version>
+        <logback.version>1.5.19</logback.version>
+        <commons-lang3.version>3.18.0</commons-lang3.version>
     </properties>
 	<dependencies>
 		<dependency>
@@ -86,7 +88,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>
-                        @{argLine} -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar -Xshare:off
+                         -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar -Xshare:off
                     </argLine>
                 </configuration>
             </plugin>
@@ -96,7 +98,7 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
                     <argLine>
-                        @{argLine} -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
+                         -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
                     </argLine>
                 </configuration>
             </plugin>

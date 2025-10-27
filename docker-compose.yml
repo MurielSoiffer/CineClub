@@ -1,6 +1,7 @@
 services:
 #  app:
 #    image: cineclub:latest
+#    build: .
 #    restart: always
 #    environment:
 #      PASSWORD_DB: mypassword

@@ -27,7 +27,7 @@ public class SecurityConfig {
                 .csrf(customizer -> customizer.disable())
                 .authorizeHttpRequests(auth -> auth
 //                        .requestMatchers("/peliculas/**","/salas/**").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/peliculas/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/peliculas/**","/swagger-ui.html","/swagger-ui/index.html").permitAll()
                         .requestMatchers("/usuarios/**","/api/peliculas/**","/api/salas/**","/api/funiones/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated())
                 .formLogin(form -> form

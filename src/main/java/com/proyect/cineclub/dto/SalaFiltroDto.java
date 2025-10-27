@@ -1,0 +1,31 @@
+package com.proyect.cineclub.dto;
+
+public class SalaFiltroDto {
+    private String nombre;
+    private Integer capacidadMinima;
+    private Integer capacidadMaxima;
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public Integer getCapacidadMinima() {
+        return capacidadMinima;
+    }
+
+    public void setCapacidadMinima(Integer capacidadMinima) {
+        this.capacidadMinima = capacidadMinima;
+    }
+
+    public Integer getCapacidadMaxima() {
+        return capacidadMaxima;
+    }
+
+    public void setCapacidadMaxima(Integer capacidadMaxima) {
+        this.capacidadMaxima = capacidadMaxima;
+    }
+}

@@ -4,6 +4,7 @@ import com.proyect.cineclub.entity.Butaca;
 import com.proyect.cineclub.entity.Funcion;
 import com.proyect.cineclub.entity.Pelicula;
 import com.proyect.cineclub.entity.Sala;
+import com.proyect.cineclub.exception.HorarioSuperpuestoException;
 import com.proyect.cineclub.repository.FuncionRepository;
 import com.proyect.cineclub.repository.PeliculaRepository;
 import com.proyect.cineclub.repository.SalaRepository;
@@ -32,8 +33,11 @@ public class FuncionService {
         funcion.setPelicula(peliculaCompleta);
         funcion.setSala(salaCompleta);
 
-        Funcion nuevaFuncion = funcionRepository.save(funcion);
-        return nuevaFuncion;
+        List<Funcion> superpuestas = funcionRepository.findSuperpuesta( funcion.getSala(), funcion.getInicio(), funcion.getFinalizacion(), 0L);
+        if (!superpuestas.isEmpty()) {
+            throw new HorarioSuperpuestoException("La Sala " + funcion.getSala().getId() + " ya tiene una función programada que se superpone con el horario.");
+        }
+        return funcionRepository.save(funcion);
     }
 
     @Transactional
@@ -44,6 +48,12 @@ public class FuncionService {
         }
 
         funcionExistente.get().setActiva(request.getActiva());
+        funcionExistente.get().setInicio(request.getInicio());
+        funcionExistente.get().setFinalizacion(request.getFinalizacion());
+        List<Funcion> superpuestas = funcionRepository.findSuperpuesta( funcionExistente.get().getSala(), request.getInicio(), request.getFinalizacion(), id);
+        if (!superpuestas.isEmpty()) {
+            throw new HorarioSuperpuestoException("La Sala " + funcionExistente.get().getSala().getId() + " ya tiene una función programada que se superpone con el horario.");
+        }
 
         return funcionRepository.save(funcionExistente.get());
     }

@@ -1,13 +1,21 @@
 package com.proyect.cineclub.controller;
 
+import com.proyect.cineclub.dto.PeliculaFiltroDto;
 import com.proyect.cineclub.dto.SalaDto;
+import com.proyect.cineclub.dto.SalaFiltroDto;
 import com.proyect.cineclub.entity.Butaca;
+import com.proyect.cineclub.entity.Pelicula;
 import com.proyect.cineclub.entity.Sala;
+import com.proyect.cineclub.repository.SalaRepository;
 import com.proyect.cineclub.service.SalaService;
+import com.proyect.cineclub.specification.PeliculaSpecificationBuilder;
+import com.proyect.cineclub.specification.SalaSpecificationBuilder;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +32,12 @@ public class SalaController {
     @Autowired
     SalaService salaService;
 
+    private final SalaRepository salaRepository;
+
+    public SalaController(SalaRepository salaRepository) {
+        this.salaRepository = salaRepository;
+    }
+
     @GetMapping
     public List<SalaDto> get(@PageableDefault(size = 5, sort = "id") Pageable pageable){
         Page<Sala> salas = salaService.getAll(pageable);
@@ -38,6 +52,19 @@ public class SalaController {
         SalaDto salaDto = SalaDto.fromSala(saveSala);
         return salaDto;
     }
+    @PostMapping("/buscar")
+    public ResponseEntity<Page<SalaDto>> buscarSalas(
+            @RequestBody SalaFiltroDto filtro,
+            @PageableDefault(size = 10, sort = "nombre", direction =
+                    Sort.Direction.ASC) Pageable pageable
+    ) {
+        Specification<Sala> spec =
+                SalaSpecificationBuilder.construirFiltros(filtro);
+        Page<Sala> resultado = salaRepository.findAll(spec, pageable);
+        Page<SalaDto> resultadoDto = resultado.map(SalaDto::fromSala);
+        return ResponseEntity.ok(resultadoDto);
+    }
+
     @GetMapping(path = "/{id}")
     public ResponseEntity<SalaDto> getById(@PathVariable("id") Long id){
         Optional<Sala> salaOptional = this.salaService.getById(id);
