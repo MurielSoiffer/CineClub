@@ -2,6 +2,7 @@ package com.proyect.cineclub.service;
 
 import com.proyect.cineclub.entity.Ticket;
 import com.proyect.cineclub.repository.TicketRepository;
+import com.proyect.cineclub.security.EstadoTicket;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,11 +33,11 @@ public class TicketServiceTest {
     void setUp() {
         ticketEjemplo = new Ticket();
         ticketEjemplo.setId(101L);
-        ticketEjemplo.setEstado("HOLD");
+        ticketEjemplo.setEstado(EstadoTicket.HOLD);
 
         ticketEjemplo2 = new Ticket();
         ticketEjemplo2.setId(102L);
-        ticketEjemplo2.setEstado("CONFIRMADO");
+        ticketEjemplo2.setEstado(EstadoTicket.CONFIRMADO);
     }
 
     // ------------------------------------------
@@ -50,7 +51,7 @@ public class TicketServiceTest {
 
         assertNotNull(resultado);
         assertEquals(101L, resultado.getId());
-        assertEquals("HOLD", resultado.getEstado());
+        assertEquals(EstadoTicket.HOLD, resultado.getEstado());
 
         verify(ticketRepository, times(1)).save(ticketEjemplo);
     }
@@ -64,7 +65,7 @@ public class TicketServiceTest {
         Long id = 101L;
 
         Ticket requestUpdate = new Ticket();
-        requestUpdate.setEstado("CANCELADO");
+        requestUpdate.setEstado(EstadoTicket.CANCELADO);
 
         when(ticketRepository.findById(id)).thenReturn(Optional.of(ticketEjemplo));
 
@@ -74,7 +75,7 @@ public class TicketServiceTest {
 
         assertNotNull(resultado);
         assertEquals(id, resultado.getId(), "El ID debe mantenerse.");
-        assertEquals("CANCELADO", resultado.getEstado(), "El estado debe actualizarse a 'CANCELADO'.");
+        assertEquals(EstadoTicket.CANCELADO, resultado.getEstado(), "El estado debe actualizarse a 'CANCELADO'.");
 
         verify(ticketRepository, times(1)).findById(id);
         verify(ticketRepository, times(1)).save(any(Ticket.class));
@@ -85,14 +86,14 @@ public class TicketServiceTest {
         Long id = 101L;
 
         Ticket requestUpdate = new Ticket();
-        requestUpdate.setEstado("CONFIRMADO");
+        requestUpdate.setEstado(EstadoTicket.CONFIRMADO);
 
         when(ticketRepository.findById(id)).thenReturn(Optional.of(ticketEjemplo));
         when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArguments()[0]);
 
         Ticket resultado = ticketService.updateById(requestUpdate, id);
 
-        assertEquals("CONFIRMADO", resultado.getEstado());
+        assertEquals(EstadoTicket.CONFIRMADO, resultado.getEstado());
     }
 
     // ------------------------------------------

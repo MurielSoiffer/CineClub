@@ -1,14 +1,12 @@
 package com.proyect.cineclub.controller;
 
-import com.proyect.cineclub.dto.FuncionDto;
-import com.proyect.cineclub.dto.FuncionFiltroDto;
-import com.proyect.cineclub.dto.SalaDto;
-import com.proyect.cineclub.dto.SalaFiltroDto;
-import com.proyect.cineclub.entity.Butaca;
-import com.proyect.cineclub.entity.Funcion;
-import com.proyect.cineclub.entity.Sala;
+import com.proyect.cineclub.dto.*;
+import com.proyect.cineclub.entity.*;
 import com.proyect.cineclub.repository.FuncionRepository;
+import com.proyect.cineclub.repository.TicketRepository;
+import com.proyect.cineclub.security.EstadoTicket;
 import com.proyect.cineclub.service.FuncionService;
+import com.proyect.cineclub.service.TicketService;
 import com.proyect.cineclub.specification.FuncionSpecificationBuilder;
 import com.proyect.cineclub.specification.SalaSpecificationBuilder;
 import jakarta.validation.Valid;
@@ -20,8 +18,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.attribute.UserPrincipal;
+import java.security.Principal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -33,10 +35,15 @@ public class FuncionController {
     @Autowired
     FuncionService funcionService;
 
-    private final FuncionRepository funcionRepository;
+    @Autowired
+    TicketService ticketService;
 
-    public FuncionController(FuncionRepository funcionRepository) {
+    private final FuncionRepository funcionRepository;
+    private final TicketRepository ticketRepository;
+
+    public FuncionController(FuncionRepository funcionRepository,TicketRepository ticketRepository) {
         this.funcionRepository = funcionRepository;
+        this.ticketRepository = ticketRepository;
     }
 
     @GetMapping
@@ -82,17 +89,77 @@ public class FuncionController {
     @GetMapping(path = "/{id}/butacas")
     public ResponseEntity<List<String>> getButacasSala(@PathVariable("id") Long id){
         Optional<Funcion> funcionOptional = this.funcionService.getById(id);
-        if (funcionOptional.isPresent()){
-            List<Butaca> sala = funcionOptional.get().getSala().getButacas();
-            List<String> butacas = sala.stream()
-                    .map(Butaca::getEtiqueta)
+        if (funcionOptional.isPresent()) {
+            Funcion funcion = funcionOptional.get();
+            List<Butaca> sala = funcion.getSala().getButacas();
+
+            List<EstadoTicket> estadosNoLiberados = Arrays.asList(
+                    EstadoTicket.HOLD,
+                    EstadoTicket.CONFIRMADO
+            );
+
+            List<String> butacasStatus = sala.stream()
+                    .map(butaca -> {
+                        String etiqueta = butaca.getEtiqueta();
+                        Optional<Ticket> ticketOptional = ticketRepository.findFirstByFuncionAndButacaAndEstadoIn(
+                                funcion,
+                                butaca,
+                                estadosNoLiberados
+                        );
+
+                        String estadoButaca;
+                        if (ticketOptional.isPresent()) {
+                            EstadoTicket estadoTicket = ticketOptional.get().getEstado();
+
+                            if (estadoTicket == EstadoTicket.CONFIRMADO) {
+                                estadoButaca = " :OCUPADO";
+                            } else if (estadoTicket == EstadoTicket.HOLD) {
+                                estadoButaca = " :RESERVADO";
+                            } else {
+                                estadoButaca = " :LIBRE";
+                            }
+                        } else {
+                            estadoButaca = " :LIBRE";
+                        }
+
+                        return etiqueta + estadoButaca;
+                    })
                     .collect(Collectors.toList());
-            return new ResponseEntity<>(butacas, HttpStatus.OK);
-        }
-        else {
+
+            return new ResponseEntity<>(butacasStatus, HttpStatus.OK);
+        } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
+    //------------------------------------No funciona actualmente, hay que arreglarlo despues-----------------------------------------
+    @PostMapping("/{id}/holds")
+    public ResponseEntity<Ticket> createHold(
+            @PathVariable Long id,
+            @Valid @RequestBody HoldRequest request) {
+
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Long userId = null;
+        if (principal instanceof UsuarioPrincipal) {
+            UsuarioPrincipal userPrincipal = (UsuarioPrincipal) principal;
+            userId = userPrincipal.getUser().getId();
+        } else {
+            throw new IllegalStateException("Error al obtener el ID del usuario autenticado.");
+        }
+
+        Ticket createdTicket = ticketService.createHold(
+        id,
+        request.getButacasIds(),
+        request.getTtlSeconds(),
+        userId
+        );
+        return new ResponseEntity<>(
+                createdTicket,
+                HttpStatus.CREATED
+        );
+    }
+    //--------------------------------------------------------------------------------------------------------------------------------
 
     @PutMapping(path = "/{id}")
     public ResponseEntity<FuncionDto> updateById(@RequestBody Funcion request, @PathVariable("id") long id){

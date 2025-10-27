@@ -1,5 +1,6 @@
 package com.proyect.cineclub.entity;
 
+import com.proyect.cineclub.security.EstadoTicket;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -18,9 +19,10 @@ public class Ticket {
 
     // ciclo de vida: HOLD, CONFIRMADO, CANCELADO, EXPIRADO
     @NotNull
+    @Enumerated(EnumType.STRING)
     @Pattern(regexp = "HOLD|CONFIRMADO|CANCELADO|EXPIRADO",
             message = "El estado debe ser uno de: HOLD, CONFIRMADO, CANCELADO, o EXPIRADO.")
-    private String estado;
+    private EstadoTicket estado;
 
     @NotNull
     @ManyToOne
@@ -30,7 +32,7 @@ public class Ticket {
     @NotNull
     @ManyToOne
     @JoinColumn(name = "funcion_fk")
-    private Funcion screening;
+    private Funcion funcion;
 
     @NotNull
     @ManyToOne
@@ -47,11 +49,11 @@ public class Ticket {
         this.id = id;
     }
 
-    public String getEstado() {
+    public EstadoTicket getEstado() {
         return estado;
     }
 
-    public void setEstado(String estado) {
+    public void setEstado(EstadoTicket estado) {
         this.estado = estado;
     }
 
@@ -63,12 +65,12 @@ public class Ticket {
         this.butaca = butaca;
     }
 
-    public Funcion getScreening() {
-        return screening;
+    public Funcion getFuncion() {
+        return funcion;
     }
 
-    public void setScreening(Funcion screening) {
-        this.screening = screening;
+    public void setFuncion(Funcion funcion) {
+        this.funcion = funcion;
     }
 
     public Usuario getUsuario() {
