@@ -4,7 +4,7 @@
 
 ## 🌟 Resumen del Proyecto
 
-<img align="right" width=300px alt="Abeja volando" src="https://raw.githubusercontent.com/MurielSoiffer/MurielSoiffer/master/assets/cine.gif"/>
+<img align="right" width=300px alt="cine" src="https://raw.githubusercontent.com/MurielSoiffer/MurielSoiffer/master/assets/cine.gif"/>
 
 
 Este repositorio contiene la implementación de una **API REST de backend** para el sistema de gestión de un cine.  
