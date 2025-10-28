@@ -18,6 +18,10 @@ public class ButacaService {
         return butacaRepository.save(butaca);
     }
 
+    public List<Butaca> saveAll(List<Butaca> butacas){
+        return butacaRepository.saveAll(butacas);
+    }
+
     @Transactional
     public Butaca updateById(Butaca request, Long id) {
         Optional<Butaca> butacaExistente = butacaRepository.findById(id);
@@ -34,6 +38,7 @@ public class ButacaService {
     public List<Butaca> getAll(){return butacaRepository.findAll();}
 
     public Optional<Butaca> getById(Long id){return butacaRepository.findById(id);}
+    public List<Butaca> getAllById(List<Long> ids){return butacaRepository.findAllById(ids);}
 
     public void deleteById(Long id){butacaRepository.deleteById(id);}
 }

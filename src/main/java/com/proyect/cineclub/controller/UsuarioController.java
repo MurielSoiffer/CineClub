@@ -1,5 +1,6 @@
 package com.proyect.cineclub.controller;
 
+import com.proyect.cineclub.dto.UsuarioDto;
 import com.proyect.cineclub.entity.Usuario;
 import com.proyect.cineclub.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/usuarios")
+@RequestMapping("api/usuarios")
 public class UsuarioController {
     @Autowired
     UsuarioService usuarioService;
@@ -24,8 +25,9 @@ public class UsuarioController {
     public List<Usuario> getUsuarios(@PageableDefault(size = 5, sort = "id") Pageable pageable){
         return usuarioService.getAll(pageable).getContent();
     }
-    @PostMapping(path = "/post")
-    public Usuario save(@RequestBody @Valid Usuario usuario){
+    @PostMapping
+    public Usuario save(@RequestBody @Valid UsuarioDto usuarioDto){
+        Usuario usuario = UsuarioDto.fromUsuarioDto(usuarioDto);
         Usuario saveUsuario = this.usuarioService.save(usuario);
         return usuario;
     }

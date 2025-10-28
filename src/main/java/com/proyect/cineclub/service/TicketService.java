@@ -28,13 +28,13 @@ public class TicketService {
     TicketRepository ticketRepository;
 
     @Autowired
-    FuncionRepository funcionRepository;
+    FuncionService funcionService;
 
     @Autowired
-    ButacaRepository butacaRepository;
+    ButacaService butacaService;
 
     @Autowired
-    UsuarioRepository usuarioRepository;
+    UsuarioService usuarioService;
 
     public Ticket save(Ticket butaca){
         return ticketRepository.save(butaca);
@@ -71,10 +71,10 @@ public class TicketService {
         @Transactional
         public Ticket createHold(Long screeningId, List<Long> seatIds, Integer ttlSeconds, Long userId) {
 
-            Funcion funcion = funcionRepository.findById(screeningId)
+            Funcion funcion = funcionService.getById(screeningId)
                     .orElseThrow(() -> new EntityNotFoundException("Función no encontrada"));
 
-            List<Butaca> seats = butacaRepository.findAllById(seatIds);
+            List<Butaca> seats = butacaService.getAllById(seatIds);
             if (seats.size() != seatIds.size()) {
 //                throw new ValidationException("Una o más butacas no existen");
             }
@@ -94,7 +94,7 @@ public class TicketService {
             Ticket newHold = new Ticket();
             newHold.setFuncion(funcion);
             newHold.setButaca(seats.get(0));
-            newHold.setUsuario(usuarioRepository.getReferenceById(userId));
+            newHold.setUsuario(usuarioService.getReferenceById(userId));
             newHold.setEstado(EstadoTicket.HOLD);
             newHold.setHoldExpirationTime(expirationTime);
 

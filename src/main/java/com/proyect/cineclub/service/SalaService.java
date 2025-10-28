@@ -20,7 +20,7 @@ public class SalaService {
     SalaRepository salaRepository;
 
     @Autowired
-    ButacaRepository butacaRepository;
+    ButacaService butacaService;
 
     private static final int BUTACAS_POR_FILA = 10;
 
@@ -84,7 +84,7 @@ public class SalaService {
                 butacasRestantes--;
             }
         }
-        butacaRepository.saveAll(butacas);
+        butacaService.saveAll(butacas);
 
         return butacas;
     }

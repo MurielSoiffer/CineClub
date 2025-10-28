@@ -26,10 +26,14 @@ public class SecurityConfig {
         return httpSecurity
                 .csrf(customizer -> customizer.disable())
                 .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers("/peliculas/**","/salas/**").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/peliculas/**","/swagger-ui.html","/swagger-ui/index.html").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/funiones/**").hasAuthority("ADMIN")
-                        .requestMatchers("/usuarios/**","/api/peliculas/**","/api/salas/**","/api/funiones/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.GET,  "/api/salas/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/peliculas/**", "/api/salas/**", "/api/funciones/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/peliculas/**", "/api/salas/**", "/api/funciones/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/peliculas/**", "/api/salas/**", "/api/funciones/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/usuarios/**").hasAuthority("ADMIN")
+
+                        .requestMatchers(HttpMethod.GET,"/api/peliculas/**").permitAll()
+
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .successHandler(successHandler()) //URL donde se va a ir despues de iniciar sesion
@@ -55,7 +59,7 @@ public class SecurityConfig {
 
     private AuthenticationSuccessHandler successHandler() {
         return(((request, response, authentication) ->
-                response.sendRedirect("/v1/index")));
+                response.sendRedirect("/api/funciones")));
     }
 
     @Bean

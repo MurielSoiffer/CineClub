@@ -46,6 +46,8 @@ public class UsuarioService implements UserDetailsService {
 
     public Optional<Usuario> getById(Long id){return usuarioRepository.findById(id);}
 
+    public Usuario getReferenceById(Long id){return usuarioRepository.getReferenceById(id);}
+
     public void deleteById(Long id){usuarioRepository.deleteById(id);}
 
     @Override
@@ -57,4 +59,6 @@ public class UsuarioService implements UserDetailsService {
         }
         return usuario;
     }
+
+
 }

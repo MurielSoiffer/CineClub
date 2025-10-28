@@ -20,14 +20,14 @@ import java.util.Optional;
 @Service
 public class FuncionService {
     @Autowired FuncionRepository funcionRepository;
-    @Autowired private PeliculaRepository peliculaRepository;
-    @Autowired private SalaRepository salaRepository;
+    @Autowired private PeliculaService peliculaService;
+    @Autowired private SalaService salaService;
 
     public Funcion save(Funcion funcion){
-        Pelicula peliculaCompleta = peliculaRepository.findById(funcion.getPelicula().getId())
+        Pelicula peliculaCompleta = peliculaService.getById(funcion.getPelicula().getId())
                 .orElseThrow(() -> new RuntimeException("Pelicula no encontrada"));
 
-        Sala salaCompleta = salaRepository.findById(funcion.getSala().getId())
+        Sala salaCompleta = salaService.getById(funcion.getSala().getId())
                 .orElseThrow(() -> new RuntimeException("Sala no encontrada"));
 
         funcion.setPelicula(peliculaCompleta);
@@ -35,7 +35,7 @@ public class FuncionService {
 
         List<Funcion> superpuestas = funcionRepository.findSuperpuesta( funcion.getSala(), funcion.getInicio(), funcion.getFinalizacion(), 0L);
         if (!superpuestas.isEmpty()) {
-            throw new HorarioSuperpuestoException("La Sala " + funcion.getSala().getId() + " ya tiene una función programada que se superpone con el horario.");
+            throw new HorarioSuperpuestoException(funcion.getSala().getId());
         }
         return funcionRepository.save(funcion);
     }
@@ -52,7 +52,7 @@ public class FuncionService {
         funcionExistente.get().setFinalizacion(request.getFinalizacion());
         List<Funcion> superpuestas = funcionRepository.findSuperpuesta( funcionExistente.get().getSala(), request.getInicio(), request.getFinalizacion(), id);
         if (!superpuestas.isEmpty()) {
-            throw new HorarioSuperpuestoException("La Sala " + funcionExistente.get().getSala().getId() + " ya tiene una función programada que se superpone con el horario.");
+            throw new HorarioSuperpuestoException(funcionExistente.get().getSala().getId());
         }
 
         return funcionRepository.save(funcionExistente.get());
