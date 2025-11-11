@@ -2,6 +2,7 @@ package com.proyect.cineclub.service;
 
 import com.proyect.cineclub.entity.Butaca;
 import com.proyect.cineclub.entity.Sala;
+import com.proyect.cineclub.exception.RecursoNoEncontradoException;
 import com.proyect.cineclub.repository.ButacaRepository;
 import com.proyect.cineclub.repository.SalaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,25 +35,24 @@ public class SalaService {
 
     @Transactional
     public Sala updateById(Sala request, Long id) {
-        Optional<Sala> salaExistente = salaRepository.findById(id);
-        if(salaExistente.isEmpty()) {
-            // .orElseThrow(() -> new RuntimeException("Pelicula no encontrada"));
-        }
-        int capacidadAnterior = salaExistente.get().getCapacidad();
+        Sala salaExistente = salaRepository.findById(id)
+            .orElseThrow(() -> new RecursoNoEncontradoException("Sala",id));
+
+        int capacidadAnterior = salaExistente.getCapacidad();
         int nuevaCapacidad = request.getCapacidad();
 
-        salaExistente.get().setNombre(request.getNombre());
-        salaExistente.get().setCapacidad(request.getCapacidad());
+        salaExistente.setNombre(request.getNombre());
+        salaExistente.setCapacidad(request.getCapacidad());
 
         if (nuevaCapacidad != capacidadAnterior) {
             if (nuevaCapacidad < capacidadAnterior) {
-                eliminarExcesoDeButacas(salaExistente.get(), nuevaCapacidad);
+                eliminarExcesoDeButacas(salaExistente, nuevaCapacidad);
             } else {
-                agregarNuevasButacas(salaExistente.get(), nuevaCapacidad, capacidadAnterior);
+                agregarNuevasButacas(salaExistente, nuevaCapacidad, capacidadAnterior);
             }
         }
 
-        return salaRepository.save(salaExistente.get());
+        return salaRepository.save(salaExistente);
     }
 
     public Page<Sala> getAll(Pageable pageable){return salaRepository.findAll(pageable);}

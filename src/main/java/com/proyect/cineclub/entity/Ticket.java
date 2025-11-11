@@ -9,7 +9,7 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "tickets", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"butaca_fk", "funcion_fk", "estado"})
+        @UniqueConstraint(columnNames = {"butaca_fk", "funcion_fk"}, name = "uq_funcion_butaca")
 })
 public class Ticket {
 
@@ -19,9 +19,7 @@ public class Ticket {
 
     // ciclo de vida: HOLD, CONFIRMADO, CANCELADO, EXPIRADO
     @NotNull
-    @Enumerated(EnumType.STRING)
-    @Pattern(regexp = "HOLD|CONFIRMADO|CANCELADO|EXPIRADO",
-            message = "El estado debe ser uno de: HOLD, CONFIRMADO, CANCELADO, o EXPIRADO.")
+    @Enumerated(EnumType.ORDINAL)
     private EstadoTicket estado;
 
     @NotNull

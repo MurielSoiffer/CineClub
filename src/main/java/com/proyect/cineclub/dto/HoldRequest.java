@@ -8,19 +8,19 @@ import java.util.List;
 
 public class HoldRequest {
     @NotEmpty
-    private List<Long> butacasIds;
+    private List<String> butacas;
 
     //TTL minimo y maximo
     @Min(60)
     @Max(900)
     private Integer ttlSeconds;
 
-    public List<Long> getButacasIds() {
-        return butacasIds;
+    public List<String> getButacas() {
+        return butacas;
     }
 
-    public void setButacasIds(List<Long> butacasIds) {
-        this.butacasIds = butacasIds;
+    public void setButacas(List<String> butacas) {
+        this.butacas = butacas;
     }
 
     public Integer getTtlSeconds() {

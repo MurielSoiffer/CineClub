@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 
 public class FuncionFiltroDto {
     private String pelicula;
-    private String Sala;
+    private String sala;
     private LocalDateTime fechaYhoraMinima;
     private Long precioMinimo;
     private Long precioMaximo;
@@ -19,11 +19,11 @@ public class FuncionFiltroDto {
     }
 
     public String getSala() {
-        return Sala;
+        return sala;
     }
 
     public void setSala(String sala) {
-        Sala = sala;
+        this.sala = sala;
     }
 
     public LocalDateTime getFechaYhoraMinima() {

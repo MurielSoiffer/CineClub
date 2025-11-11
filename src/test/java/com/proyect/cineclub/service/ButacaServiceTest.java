@@ -31,13 +31,13 @@ public class ButacaServiceTest {
     @BeforeEach
     void setUp() {
         butacaEjemplo = new Butaca();
-        butacaEjemplo.setId(1L);
+        butacaEjemplo.setId(1);
         butacaEjemplo.setFila("A");
         butacaEjemplo.setNumero(5);
         butacaEjemplo.setEtiqueta("A-5");
 
         butacaEjemplo2 = new Butaca();
-        butacaEjemplo2.setId(2L);
+        butacaEjemplo2.setId(2);
         butacaEjemplo2.setFila("B");
         butacaEjemplo2.setNumero(10);
         butacaEjemplo2.setEtiqueta("B-10");
@@ -54,7 +54,7 @@ public class ButacaServiceTest {
         Butaca resultado = butacaService.save(butacaEjemplo);
 
         assertNotNull(resultado);
-        assertEquals(1L, resultado.getId());
+        assertEquals(1, resultado.getId());
         assertEquals("A-5", resultado.getEtiqueta());
 
         verify(butacaRepository, times(1)).save(butacaEjemplo);

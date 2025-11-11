@@ -1,6 +1,7 @@
 package com.proyect.cineclub.service;
 
 import com.proyect.cineclub.entity.Butaca;
+import com.proyect.cineclub.exception.RecursoNoEncontradoException;
 import com.proyect.cineclub.repository.ButacaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,15 +25,13 @@ public class ButacaService {
 
     @Transactional
     public Butaca updateById(Butaca request, Long id) {
-        Optional<Butaca> butacaExistente = butacaRepository.findById(id);
-        if(butacaExistente.isEmpty()) {
-            // .orElseThrow(() -> new RuntimeException("Pelicula no encontrada"));
-        }
+        Butaca butacaExistente = butacaRepository.findById(id)
+            .orElseThrow(() -> new RecursoNoEncontradoException("Butaca",id));
 
-        butacaExistente.get().setFila(request.getFila());
-        butacaExistente.get().setNumero(request.getNumero());
+        butacaExistente.setFila(request.getFila());
+        butacaExistente.setNumero(request.getNumero());
 
-        return butacaRepository.save(butacaExistente.get());
+        return butacaRepository.save(butacaExistente);
     }
 
     public List<Butaca> getAll(){return butacaRepository.findAll();}
@@ -40,5 +39,8 @@ public class ButacaService {
     public Optional<Butaca> getById(Long id){return butacaRepository.findById(id);}
     public List<Butaca> getAllById(List<Long> ids){return butacaRepository.findAllById(ids);}
 
+    public List<Butaca> getAllByEtiqueta(List<String> etiquetas){
+        return butacaRepository.findAllByEtiquetaIn(etiquetas);
+    }
     public void deleteById(Long id){butacaRepository.deleteById(id);}
 }

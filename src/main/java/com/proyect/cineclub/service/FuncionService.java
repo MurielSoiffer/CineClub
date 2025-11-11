@@ -5,6 +5,7 @@ import com.proyect.cineclub.entity.Funcion;
 import com.proyect.cineclub.entity.Pelicula;
 import com.proyect.cineclub.entity.Sala;
 import com.proyect.cineclub.exception.HorarioSuperpuestoException;
+import com.proyect.cineclub.exception.RecursoNoEncontradoException;
 import com.proyect.cineclub.repository.FuncionRepository;
 import com.proyect.cineclub.repository.PeliculaRepository;
 import com.proyect.cineclub.repository.SalaRepository;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class FuncionService {
@@ -25,15 +27,15 @@ public class FuncionService {
 
     public Funcion save(Funcion funcion){
         Pelicula peliculaCompleta = peliculaService.getById(funcion.getPelicula().getId())
-                .orElseThrow(() -> new RuntimeException("Pelicula no encontrada"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Pelicula",funcion.getPelicula().getId()));
 
         Sala salaCompleta = salaService.getById(funcion.getSala().getId())
-                .orElseThrow(() -> new RuntimeException("Sala no encontrada"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Sala", funcion.getSala().getId()));
 
         funcion.setPelicula(peliculaCompleta);
         funcion.setSala(salaCompleta);
 
-        List<Funcion> superpuestas = funcionRepository.findSuperpuesta( funcion.getSala(), funcion.getInicio(), funcion.getFinalizacion(), 0L);
+        List<Funcion> superpuestas = funcionRepository.findSuperpuesta( funcion.getSala(), funcion.getInicio(), funcion.getFinalizacion());
         if (!superpuestas.isEmpty()) {
             throw new HorarioSuperpuestoException(funcion.getSala().getId());
         }
@@ -42,20 +44,20 @@ public class FuncionService {
 
     @Transactional
     public Funcion updateById(Funcion request, Long id) {
-        Optional<Funcion> funcionExistente = funcionRepository.findById(id);
-        if(funcionExistente.isEmpty()) {
-            // .orElseThrow(() -> new RuntimeException("Pelicula no encontrada"));
+        Funcion funcionExistente = funcionRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Función", id));
+
+        funcionExistente.setActiva(request.getActiva());
+        funcionExistente.setInicio(request.getInicio());
+        funcionExistente.setFinalizacion(request.getFinalizacion());
+        List<Funcion> superpuestas = funcionRepository.findSuperpuesta( funcionExistente.getSala(), request.getInicio(), request.getFinalizacion());
+        List<Funcion> superpuestasCorrecto = superpuestas.stream()
+                .filter(f -> !f.getId().equals(id)).toList();
+        if (!superpuestasCorrecto.isEmpty()) {
+            throw new HorarioSuperpuestoException(funcionExistente.getSala().getId());
         }
 
-        funcionExistente.get().setActiva(request.getActiva());
-        funcionExistente.get().setInicio(request.getInicio());
-        funcionExistente.get().setFinalizacion(request.getFinalizacion());
-        List<Funcion> superpuestas = funcionRepository.findSuperpuesta( funcionExistente.get().getSala(), request.getInicio(), request.getFinalizacion(), id);
-        if (!superpuestas.isEmpty()) {
-            throw new HorarioSuperpuestoException(funcionExistente.get().getSala().getId());
-        }
-
-        return funcionRepository.save(funcionExistente.get());
+        return funcionRepository.save(funcionExistente);
     }
 
     public Page<Funcion> getAll(Pageable pageable){return funcionRepository.findAll(pageable);}

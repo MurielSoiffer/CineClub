@@ -2,6 +2,7 @@ package com.proyect.cineclub.controller;
 
 import com.proyect.cineclub.dto.PeliculaFiltroDto;
 import com.proyect.cineclub.entity.Pelicula;
+import com.proyect.cineclub.swagger.PeliculaApi;
 import com.proyect.cineclub.repository.PeliculaRepository;
 import com.proyect.cineclub.service.PeliculaService;
 import com.proyect.cineclub.specification.PeliculaSpecificationBuilder;
@@ -16,12 +17,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.time.LocalDate;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/peliculas")
-public class PeliculaController {
+public class PeliculaController implements PeliculaApi {
 
     @Autowired
     PeliculaService peliculaService;
@@ -31,32 +31,43 @@ public class PeliculaController {
     public PeliculaController(PeliculaRepository peliculaRepository) {
         this.peliculaRepository = peliculaRepository;
     }
-
-    @GetMapping
-    public ResponseEntity<List<Pelicula>> get(@PageableDefault(size = 5, sort = "id") Pageable pageable){
-        Page<Pelicula> pagePeliculas = peliculaService.getAll(pageable);
-        List<Pelicula> peliculas = pagePeliculas.getContent();
-        return ResponseEntity.ok(peliculas);
-    }
-    @PostMapping
+//
+//    @GetMapping
+//    public ResponseEntity<List<Pelicula>> get(@PageableDefault(size = 5, sort = "id") Pageable pageable){
+//        Page<Pelicula> pagePeliculas = peliculaService.getAll(pageable);
+//        List<Pelicula> peliculas = pagePeliculas.getContent();
+//        return ResponseEntity.ok(peliculas);
+//    }
+    @Override
     public Pelicula save(@RequestBody @Valid Pelicula pelicula){
         Pelicula savePelicula = this.peliculaService.save(pelicula);
         return pelicula;
     }
 
-    @PostMapping("/buscar")
+    @Override
     public ResponseEntity<Page<Pelicula>> buscarPeliculas(
-            @RequestBody PeliculaFiltroDto filtro,
-            @PageableDefault(size = 10, sort = "titulo", direction =
+            @RequestParam(required = false) String titulo,
+            @RequestParam(required = false) String duracionMaxima,
+            @RequestParam(required = false) String duracionMimina,
+            @RequestParam(required = false) LocalDate fechaEstrenoDesde,
+            @RequestParam(required = false) Integer edadMinima,
+            @PageableDefault(size = 10, sort = "id", direction =
                     Sort.Direction.ASC) Pageable pageable
     ) {
+        PeliculaFiltroDto filtro = new PeliculaFiltroDto();
+        filtro.setTitulo(titulo);
+        filtro.setDuracionMaxima(duracionMaxima);
+        filtro.setDuracionMinima(duracionMimina);
+        filtro.setEdadMinima(edadMinima);
+        filtro.setFechaEstrenoDesde(fechaEstrenoDesde);
+
         Specification<Pelicula> spec =
                 PeliculaSpecificationBuilder.construirFiltros(filtro);
         Page<Pelicula> resultado = peliculaRepository.findAll(spec, pageable);
         return ResponseEntity.ok(resultado);
     }
 
-    @GetMapping(path = "/{id}")
+    @Override
     public ResponseEntity<Pelicula> getById(@PathVariable("id") Long id){
         Optional<Pelicula> peliculaOptional = this.peliculaService.getById(id);
         if (peliculaOptional.isPresent()){
@@ -68,12 +79,12 @@ public class PeliculaController {
         }
     }
 
-    @PutMapping(path = "/{id}")
+    @Override
     public ResponseEntity<Pelicula> updateById(@RequestBody Pelicula request, @PathVariable("id") long id){
         return ResponseEntity.ok(this.peliculaService.updateById(request, id));
     }
 
-    @DeleteMapping(path = "/{id}")
+    @Override
     public void deletePeliculaById(@PathVariable("id") Long id){
         this.peliculaService.deleteById(id);
     }

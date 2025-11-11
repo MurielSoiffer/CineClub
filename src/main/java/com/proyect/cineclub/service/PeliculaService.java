@@ -2,6 +2,7 @@ package com.proyect.cineclub.service;
 
 import com.proyect.cineclub.entity.Funcion;
 import com.proyect.cineclub.entity.Pelicula;
+import com.proyect.cineclub.exception.RecursoNoEncontradoException;
 import com.proyect.cineclub.repository.PeliculaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -21,16 +22,14 @@ public class PeliculaService {
 
     @Transactional
     public Pelicula updateById(Pelicula request, Long id) {
-        Optional<Pelicula> peliculaExistente = peliculaRepository.findById(id);
-        if(peliculaExistente.isEmpty()) {
-            // .orElseThrow(() -> new RuntimeException("Pelicula no encontrada"));
-        }
+        Pelicula peliculaExistente = peliculaRepository.findById(id)
+            .orElseThrow(() -> new RecursoNoEncontradoException("Pelicula",id));
 
-        peliculaExistente.get().setTitulo(request.getTitulo());
-        peliculaExistente.get().setSinopsis(request.getSinopsis());
-        peliculaExistente.get().setDuracion(request.getDuracion());
+        peliculaExistente.setTitulo(request.getTitulo());
+        peliculaExistente.setSinopsis(request.getSinopsis());
+        peliculaExistente.setDuracion(request.getDuracion());
 
-        return peliculaRepository.save(peliculaExistente.get());
+        return peliculaRepository.save(peliculaExistente);
     }
 
     public Page<Pelicula> getAll(Pageable pageable){return peliculaRepository.findAll(pageable);}

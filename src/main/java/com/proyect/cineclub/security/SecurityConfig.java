@@ -9,6 +9,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
@@ -24,15 +25,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception{
         return httpSecurity
-                .csrf(customizer -> customizer.disable())
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET,  "/api/salas/**").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/peliculas/**", "/api/salas/**", "/api/funciones/**").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/peliculas/**", "/api/salas/**", "/api/funciones/**").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/peliculas/**", "/api/salas/**", "/api/funciones/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/usuarios/**").hasAuthority("ADMIN")
+                        .requestMatchers("/swagger-ui.html","/swagger-ui/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,  "/api/funciones/**","/api/tickets/**").hasAnyAuthority("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/usuarios/**").hasAnyAuthority("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/funciones/{id}/host").hasAnyAuthority("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET,  "/api/salas/**","/api/usuarios/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/peliculas/**", "/api/salas/**", "/api/funciones","/api/usuarios/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/peliculas/**", "/api/salas/**", "/api/funciones/**","/api/usuarios/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/peliculas/**", "/api/salas/**", "/api/funciones/**","/api/usuarios/**").hasAuthority("ADMIN")
+
 
                         .requestMatchers(HttpMethod.GET,"/api/peliculas/**").permitAll()
+
 
                         .anyRequest().authenticated())
                 .formLogin(form -> form

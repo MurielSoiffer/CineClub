@@ -11,7 +11,7 @@ import jakarta.validation.constraints.Size;
 public class Butaca {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @NotBlank(message = "La fila es obligatoria.")
     @Size(min = 1, max = 2, message = "La fila debe ser una letra o un código corto (ej. A, B, Z1).")
@@ -30,11 +30,11 @@ public class Butaca {
     @JoinColumn(name = "sala_id")
     private Sala sala;
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

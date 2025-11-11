@@ -12,16 +12,10 @@ import java.util.List;
 
 public interface FuncionRepository extends JpaRepository<Funcion,Long>, JpaSpecificationExecutor<Funcion> {
     @Query("SELECT f FROM Funcion f WHERE f.sala = :sala " +
-            "AND f.id <> :idExcluir " +
             "AND (" +"    (f.inicio < :finalizacion AND f.finalizacion > :inicio)" +")")
     List<Funcion> findSuperpuesta(
             @Param("sala") Sala sala,
             @Param("inicio") LocalDateTime inicio,
-            @Param("finalizacion") LocalDateTime finalizacion,
-            @Param("idExcluir") Long idExcluir);
+            @Param("finalizacion") LocalDateTime finalizacion);
 
-    // Método alternativo para cuando se guarda una función nueva (idExcluir es 0 o -1)
-    default List<Funcion> findSuperpuesta(Sala sala, LocalDateTime inicio, LocalDateTime finalizacion) {
-        return findSuperpuesta(sala, inicio, finalizacion, 0L);
-    }
 }

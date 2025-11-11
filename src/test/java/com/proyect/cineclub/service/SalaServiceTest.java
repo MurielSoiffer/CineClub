@@ -25,7 +25,7 @@ public class SalaServiceTest {
     private SalaRepository salaRepository;
 
     @Mock
-    private ButacaRepository butacaRepository;
+    private ButacaService butacaService;
 
     @InjectMocks
     private SalaService salaService;
@@ -85,7 +85,7 @@ public class SalaServiceTest {
         assertEquals("B-5", resultado.getButacas().get(14).getEtiqueta(), "Verifica la última butaca (Fila B, Asiento 5).");
 
         verify(salaRepository, times(1)).save(any(Sala.class));
-        verify(butacaRepository, times(1)).saveAll(argThat(iterable -> {
+        verify(butacaService, times(1)).saveAll(argThat(iterable -> {
             Collection<Butaca> butacas = (Collection<Butaca>) iterable;
 
             return butacas.size() == 15;

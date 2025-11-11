@@ -1,14 +1,12 @@
 package com.proyect.cineclub.controller;
 
-import com.proyect.cineclub.dto.PeliculaFiltroDto;
 import com.proyect.cineclub.dto.SalaDto;
 import com.proyect.cineclub.dto.SalaFiltroDto;
 import com.proyect.cineclub.entity.Butaca;
-import com.proyect.cineclub.entity.Pelicula;
 import com.proyect.cineclub.entity.Sala;
+import com.proyect.cineclub.swagger.SalaApi;
 import com.proyect.cineclub.repository.SalaRepository;
 import com.proyect.cineclub.service.SalaService;
-import com.proyect.cineclub.specification.PeliculaSpecificationBuilder;
 import com.proyect.cineclub.specification.SalaSpecificationBuilder;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +24,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/salas")
-public class SalaController {
+public class SalaController implements SalaApi {
 
     @Autowired
     SalaService salaService;
@@ -38,26 +35,24 @@ public class SalaController {
         this.salaRepository = salaRepository;
     }
 
-    @GetMapping
-    public List<SalaDto> get(@PageableDefault(size = 5, sort = "id") Pageable pageable){
-        Page<Sala> salas = salaService.getAll(pageable);
-        List<SalaDto> salasDto = salas.stream()
-                .map(SalaDto::fromSala)
-                .collect(Collectors.toList());
-        return salasDto;
-    }
-    @PostMapping
+    @Override
     public SalaDto save(@RequestBody @Valid Sala sala){
         Sala saveSala = this.salaService.save(sala);
         SalaDto salaDto = SalaDto.fromSala(saveSala);
         return salaDto;
     }
-    @PostMapping("/buscar")
+    @Override
     public ResponseEntity<Page<SalaDto>> buscarSalas(
-            @RequestBody SalaFiltroDto filtro,
-            @PageableDefault(size = 10, sort = "nombre", direction =
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) Integer capacidadMinima,
+            @RequestParam(required = false) Integer capacidadMaxima,
+            @PageableDefault(size = 10, sort = "id", direction =
                     Sort.Direction.ASC) Pageable pageable
     ) {
+        SalaFiltroDto filtro = new SalaFiltroDto();
+        filtro.setNombre(nombre);
+        filtro.setCapacidadMaxima(capacidadMaxima);
+        filtro.setCapacidadMinima(capacidadMinima);
         Specification<Sala> spec =
                 SalaSpecificationBuilder.construirFiltros(filtro);
         Page<Sala> resultado = salaRepository.findAll(spec, pageable);
@@ -65,7 +60,7 @@ public class SalaController {
         return ResponseEntity.ok(resultadoDto);
     }
 
-    @GetMapping(path = "/{id}")
+    @Override
     public ResponseEntity<SalaDto> getById(@PathVariable("id") Long id){
         Optional<Sala> salaOptional = this.salaService.getById(id);
         if (salaOptional.isPresent()){
@@ -76,7 +71,7 @@ public class SalaController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
-    @GetMapping(path = "/{id}/butacas")
+    @Override
     public ResponseEntity<List<String>> getButacasSala(@PathVariable("id") Long id){
         Optional<Sala> salaOptional = this.salaService.getById(id);
         if (salaOptional.isPresent()){
@@ -91,12 +86,12 @@ public class SalaController {
         }
     }
 
-    @PutMapping(path = "/{id}")
+    @Override
     public ResponseEntity<SalaDto> updateById(@RequestBody Sala request, @PathVariable("id") long id){
         return ResponseEntity.ok(SalaDto.fromSala(this.salaService.updateById(request, id)));
     }
 
-    @DeleteMapping(path = "/{id}")
+    @Override
     public void deleteSalaById(@PathVariable("id") Long id){
         this.salaService.deleteById(id);
     }

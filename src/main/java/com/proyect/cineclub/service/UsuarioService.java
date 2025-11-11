@@ -1,6 +1,7 @@
 package com.proyect.cineclub.service;
 
 import com.proyect.cineclub.entity.Usuario;
+import com.proyect.cineclub.exception.RecursoNoEncontradoException;
 import com.proyect.cineclub.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,7 +25,8 @@ public class UsuarioService implements UserDetailsService {
     private PasswordEncoder passwordEncoder;
 
     public Usuario save(Usuario usuario){
-        Usuario usuario1 = usuario;
+        Usuario usuario1 = new Usuario();
+        usuario1 = usuario;
         String encryptedPassword = passwordEncoder.encode(usuario.getPassword());
         usuario1.setContraseña(encryptedPassword);
         return usuarioRepository.save(usuario1);
@@ -32,14 +34,14 @@ public class UsuarioService implements UserDetailsService {
 
     @Transactional
     public Usuario updateById(Usuario request, Long id) {
-        Optional<Usuario> usuarioExistente = usuarioRepository.findById(id);
-        if(usuarioExistente.isEmpty()) {
-            // .orElseThrow(() -> new RuntimeException("Usuario no encontrada"));
-        }
-        String encryptedPassword = passwordEncoder.encode(request.getPassword());
-        usuarioExistente.get().setContraseña(encryptedPassword);
+        Usuario usuarioExistente = usuarioRepository.findById(id)
+             .orElseThrow(() -> new RecursoNoEncontradoException("Usuario",id));
 
-        return usuarioRepository.save(usuarioExistente.get());
+//        String encryptedPassword = passwordEncoder.encode(request.getPassword());
+//        usuarioExistente.setContraseña(encryptedPassword);
+        usuarioExistente.setRol(request.getRol());
+
+        return usuarioRepository.save(usuarioExistente);
     }
 
     public Page<Usuario> getAll(Pageable pageable){return usuarioRepository.findAll(pageable);}
@@ -52,6 +54,15 @@ public class UsuarioService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Usuario usuario = usuarioRepository.findByUsername(username);
+        if(usuario == null){
+            System.out.println("User not found");
+            throw new UsernameNotFoundException("user not found");
+        }
+        return usuario;
+    }
+
+    public Usuario findByUsername(String username){
         Usuario usuario = usuarioRepository.findByUsername(username);
         if(usuario == null){
             System.out.println("User not found");

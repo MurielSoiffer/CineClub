@@ -3,6 +3,7 @@ package com.proyect.cineclub.service;
 import com.proyect.cineclub.entity.Funcion;
 import com.proyect.cineclub.entity.Pelicula;
 import com.proyect.cineclub.entity.Sala;
+import com.proyect.cineclub.exception.RecursoNoEncontradoException;
 import com.proyect.cineclub.repository.FuncionRepository;
 import com.proyect.cineclub.repository.PeliculaRepository;
 import com.proyect.cineclub.repository.SalaRepository;
@@ -30,9 +31,9 @@ public class FuncionServiceTest {
     @Mock
     private FuncionRepository funcionRepository;
     @Mock
-    private PeliculaRepository peliculaRepository;
+    private PeliculaService peliculaService;
     @Mock
-    private SalaRepository salaRepository;
+    private SalaService salaService;
 
     @InjectMocks
     private FuncionService funcionService;
@@ -60,7 +61,9 @@ public class FuncionServiceTest {
         funcionRequest = new Funcion();
         funcionRequest.setPelicula(pId);
         funcionRequest.setSala(sId);
-        funcionRequest.setInicio(LocalDateTime.now().plusDays(1));
+        LocalDateTime inicio = LocalDateTime.now().plusDays(1);
+        funcionRequest.setInicio(inicio);
+        funcionRequest.setFinalizacion(inicio.plusHours(2));
         funcionRequest.setActiva(true);
 
         funcionGuardada = new Funcion();
@@ -76,8 +79,8 @@ public class FuncionServiceTest {
 
     @Test
     void cuandoGuardarFuncion_debeAsociarEntidadesYGuardar() {
-        when(peliculaRepository.findById(1L)).thenReturn(Optional.of(peliculaEjemplo));
-        when(salaRepository.findById(10L)).thenReturn(Optional.of(salaEjemplo));
+        when(peliculaService.getById(1L)).thenReturn(Optional.of(peliculaEjemplo));
+        when(salaService.getById(10L)).thenReturn(Optional.of(salaEjemplo));
         when(funcionRepository.save(any(Funcion.class))).thenReturn(funcionGuardada);
 
         Funcion resultado = funcionService.save(funcionRequest);
@@ -87,38 +90,64 @@ public class FuncionServiceTest {
         assertEquals(peliculaEjemplo.getTitulo(), resultado.getPelicula().getTitulo());
         assertEquals(salaEjemplo.getNombre(), resultado.getSala().getNombre());
 
-        verify(peliculaRepository, times(1)).findById(1L);
-        verify(salaRepository, times(1)).findById(10L);
+        verify(peliculaService, times(1)).getById(1L);
+        verify(salaService, times(1)).getById(10L);
         verify(funcionRepository, times(1)).save(any(Funcion.class));
     }
 
     @Test
     void cuandoPeliculaNoExisteEnSave_debeLanzarExcepcion() {
-        when(peliculaRepository.findById(1L)).thenReturn(Optional.empty());
+        when(peliculaService.getById(1L)).thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        RecursoNoEncontradoException exception = assertThrows(RecursoNoEncontradoException.class, () -> {
             funcionService.save(funcionRequest);
         });
 
-        assertEquals("Pelicula no encontrada", exception.getMessage());
+        assertEquals("Pelicula no encontrada con ID: " + funcionRequest.getPelicula().getId(), exception.getMessage());
 
-        verify(salaRepository, never()).findById(anyLong());
+        verify(salaService, never()).getById(anyLong());
         verify(funcionRepository, never()).save(any(Funcion.class));
     }
 
     @Test
     void cuandoSalaNoExisteEnSave_debeLanzarExcepcion() {
-        when(peliculaRepository.findById(1L)).thenReturn(Optional.of(peliculaEjemplo));
-        when(salaRepository.findById(10L)).thenReturn(Optional.empty());
+        when(peliculaService.getById(1L)).thenReturn(Optional.of(peliculaEjemplo));
+        when(salaService.getById(10L)).thenReturn(Optional.empty());
 
+        RecursoNoEncontradoException exception = assertThrows(RecursoNoEncontradoException.class, () -> {
+            funcionService.save(funcionRequest);
+        });
+
+        assertEquals("Sala no encontrada con ID: " + funcionRequest.getSala().getId(), exception.getMessage());
+
+        verify(peliculaService, times(1)).getById(1L);
+        verify(salaService, times(1)).getById(10L);
+        verify(funcionRepository, never()).save(any(Funcion.class));
+    }
+
+    @Test
+    void cuandoFuncionSeSuperpone_debeLanzarExcepcion() {
+        // 1. Configurar Mocks para Película y Sala (que sí existen)
+        when(peliculaService.getById(1L)).thenReturn(Optional.of(peliculaEjemplo));
+        when(salaService.getById(10L)).thenReturn(Optional.of(salaEjemplo));
+
+        // 2. Configurar el Mock para la superposición (debe devolver una lista no vacía)
+        Funcion funcionSuperpuesta = new Funcion();
+        funcionSuperpuesta.setId(99L); // ID diferente
+        funcionSuperpuesta.setSala(salaEjemplo);
+        when(funcionRepository.findSuperpuesta(any(Sala.class), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(Arrays.asList(funcionSuperpuesta));
+
+        // 3. Ejecutar y verificar la excepción
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             funcionService.save(funcionRequest);
         });
 
-        assertEquals("Sala no encontrada", exception.getMessage());
-
-        verify(peliculaRepository, times(1)).findById(1L);
-        verify(salaRepository, times(1)).findById(10L);
+        verify(peliculaService, times(1)).getById(1L);
+        verify(salaService, times(1)).getById(10L);
+        // Verificamos que se llamó al método de superposición
+        verify(funcionRepository, times(1)).findSuperpuesta(any(Sala.class), any(LocalDateTime.class), any(LocalDateTime.class));
+        // Verificamos que la función NO se guardó
         verify(funcionRepository, never()).save(any(Funcion.class));
     }
 
