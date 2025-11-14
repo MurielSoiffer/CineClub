@@ -1,4 +1,4 @@
-package com.proyect.cineclub.swagger;
+package com.proyect.cineclub.configuration;
 
 import com.proyect.cineclub.dto.UsuarioDto;
 import com.proyect.cineclub.entity.Usuario;

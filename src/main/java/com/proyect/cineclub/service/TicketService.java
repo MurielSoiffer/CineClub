@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -98,24 +99,29 @@ public class TicketService {
     public void deleteById(Long id){ticketRepository.deleteById(id);}
 
 
-    @Value("${cineclub.hold.default-ttl-seconds:300}")
+    @Value("${HOLD_TTL_DEFAULT:300}")
     private int defaultTtlSeconds;
 
-    @Value("${cineclub.hold.max-seats-per-user:6}")
+    @Value("${USER_HOLD_LIMIT:6}")
     private int maxButacasPerUser;
 
-    @Value("${cineclub.hold.min-minutes-before-screening:10}")
+    @Value("${PRE_SCREENING_THRESHOLD:10}")
     private int minMinutosAntseFuncions;
 
     @Transactional
-    public Ticket createHold(Long screeningId, List<String> seat, Integer ttlSeconds, Long userId) {
+    public List<Ticket> createHold(Long screeningId, List<String> seat, Long userId) {
+
+
 
         Funcion funcion = funcionService.getById(screeningId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Funcion",screeningId));
 
-        List<Butaca> seats = butacaService.getAllByEtiqueta(seat);
-        if (seats.size() != seats.size()) {
-            throw new ValidationException("Una o más butacas no existen");
+        List<Butaca> seats = butacaService.getAllByEtiquetaAndSala(seat,funcion.getSala());
+        if (seat.size() != seats.size()) {
+            throw new ButacaInexistenteException();
+        }
+        if(seats.size() > maxButacasPerUser){
+            throw new DemasiadasButacasException(maxButacasPerUser);
         }
 
         ZoneId cinemaZone = ZoneId.systemDefault();
@@ -126,37 +132,41 @@ public class TicketService {
             throw new HoldTooCloseToStartException(holdNotAllowedBefore);
         }
 
-
-        int finalTtl = ttlSeconds != null ? ttlSeconds : defaultTtlSeconds;
+        int finalTtl = defaultTtlSeconds;
         Instant expirationTime = Instant.now().plusSeconds(finalTtl);
 
-        Optional<Ticket> existingTicketOptional = ticketRepository.findByFuncionAndButaca(funcion, seats.getFirst());
+        List<Ticket> createdTickets = new ArrayList<>();
 
-        if (existingTicketOptional.isPresent()) {
-            Ticket existingTicket = existingTicketOptional.get();
-            EstadoTicket estadoActual = existingTicket.getEstado();
+        for (Butaca butaca : seats) {
+            Optional<Ticket> existingTicketOptional = ticketRepository.findByFuncionAndButaca(funcion, butaca);
 
-            if (estadoActual == EstadoTicket.CANCELADO || estadoActual == EstadoTicket.EXPIRADO) {
+            if (existingTicketOptional.isPresent()) {
+                Ticket existingTicket = existingTicketOptional.get();
+                EstadoTicket estadoActual = existingTicket.getEstado();
 
-                existingTicket.setUsuario(usuarioService.getReferenceById(userId));
-                existingTicket.setEstado(EstadoTicket.HOLD);
-                existingTicket.setHoldExpirationTime(expirationTime);
+                if (estadoActual == EstadoTicket.CANCELADO || estadoActual == EstadoTicket.EXPIRADO) {
+                    existingTicket.setUsuario(usuarioService.getReferenceById(userId));
+                    existingTicket.setEstado(EstadoTicket.HOLD);
+                    existingTicket.setHoldExpirationTime(expirationTime);
 
-                return ticketRepository.save(existingTicket);
+                    createdTickets.add(ticketRepository.save(existingTicket));
 
-            } else if (estadoActual == EstadoTicket.HOLD || estadoActual == EstadoTicket.CONFIRMADO) {
-                throw new ButacaOcuadaException(existingTicket.getButaca().getEtiqueta());
+                } else if (estadoActual == EstadoTicket.HOLD || estadoActual == EstadoTicket.CONFIRMADO) {
+                    throw new ButacaOcuadaException(butaca.getEtiqueta());
+                }
+            } else {
+                Ticket newTicket = new Ticket();
+                newTicket.setFuncion(funcion);
+                newTicket.setButaca(butaca);
+                newTicket.setUsuario(usuarioService.getReferenceById(userId));
+                newTicket.setEstado(EstadoTicket.HOLD);
+                newTicket.setHoldExpirationTime(expirationTime);
+
+                createdTickets.add(ticketRepository.save(newTicket));
             }
         }
 
-        Ticket newHold = new Ticket();
-        newHold.setFuncion(funcion);
-        newHold.setButaca(seats.getFirst());
-        newHold.setUsuario(usuarioService.getReferenceById(userId));
-        newHold.setEstado(EstadoTicket.HOLD);
-        newHold.setHoldExpirationTime(expirationTime);
-
-        return ticketRepository.save(newHold);
+        return createdTickets;
     }
 
     @Scheduled(fixedRateString = "${app.hold.cleanup-rate-ms:60000}")

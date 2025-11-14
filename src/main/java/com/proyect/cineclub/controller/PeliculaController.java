@@ -2,7 +2,7 @@ package com.proyect.cineclub.controller;
 
 import com.proyect.cineclub.dto.PeliculaFiltroDto;
 import com.proyect.cineclub.entity.Pelicula;
-import com.proyect.cineclub.swagger.PeliculaApi;
+import com.proyect.cineclub.configuration.PeliculaApi;
 import com.proyect.cineclub.repository.PeliculaRepository;
 import com.proyect.cineclub.service.PeliculaService;
 import com.proyect.cineclub.specification.PeliculaSpecificationBuilder;

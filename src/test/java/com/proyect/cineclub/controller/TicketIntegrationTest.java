@@ -26,6 +26,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.Matchers.hasSize; // Importación necesaria para verificar el tamaño de la lista
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -174,8 +175,9 @@ public class TicketIntegrationTest {
     // -----------------------------------------------------------------
 
     /**
-     * Requisito: Creación de Hold y listado de tickets propios.
+     * Requisito: Creación de Hold para UNA butaca y listado de tickets propios.
      * Endpoint: POST /api/funciones/{id}/holds
+     * **MODIFICADO para verificar que la respuesta es una lista.**
      */
     @Test
     void test1_CreateHoldAndGetMyTickets_HappyFlow() throws Exception {
@@ -189,23 +191,56 @@ public class TicketIntegrationTest {
 
         // 2. Creación del Hold (POST /api/funciones/{id}/holds)
         mockMvc.perform(post("/api/funciones/{id}/holds", funcionFutura.getId())
-                        // *** MODIFICACIÓN CRÍTICA ***
                         .with(user(user1.getUsername()).authorities(userAuthority))
-                        // ***************************
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(holdRequest)))
                 .andExpect(status().isCreated()) // 201 CREATED
-                .andExpect(jsonPath("$.estado", is(EstadoTicket.HOLD.name())));
+                // Verifica que es una lista con un elemento
+                .andExpect(jsonPath("$", hasSize(1)))
+                // Verifica el estado del primer (y único) elemento
+                .andExpect(jsonPath("$[0].estado", is(EstadoTicket.HOLD.name())));
 
         // 3. Listar mis tickets (GET /api/tickets/me)
-        // El test de GET debe seguir usando el post-processor para mantener la autenticación
         mockMvc.perform(get("/api/tickets/me")
-                                // *** MODIFICACIÓN CRÍTICA ***
-                                .with(user(user1.getUsername()).authorities(userAuthority))
-                        // ***************************
+                        .with(user(user1.getUsername()).authorities(userAuthority))
                 )
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].estado", is(EstadoTicket.HOLD.name())));
+    }
+
+    /**
+     * Requisito: Creación de Hold para MULTIPLES butacas.
+     * Endpoint: POST /api/funciones/{id}/holds
+     */
+    @Test
+    void test_CreateHold_MultipleSeatsHappyFlow() throws Exception {
+        SimpleGrantedAuthority userAuthority = new SimpleGrantedAuthority(user1.getRol().name());
+
+        // 1. Preparar Hold Request con dos butacas
+        Map<String, Object> holdRequest = Map.of(
+                "butacas", List.of(butacaA1.getEtiqueta(), butacaA2.getEtiqueta()),
+                "ttlSeconds", 60
+        );
+
+        // 2. Creación de los Holds (POST /api/funciones/{id}/holds)
+        mockMvc.perform(post("/api/funciones/{id}/holds", funcionFutura.getId())
+                        .with(user(user1.getUsername()).authorities(userAuthority))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(holdRequest)))
+                .andExpect(status().isCreated()) // 201 CREATED
+                // Verifica que la respuesta contiene dos tickets
+                .andExpect(jsonPath("$", hasSize(2)))
+                // Verifica el estado del primer elemento
+                .andExpect(jsonPath("$[0].estado", is(EstadoTicket.HOLD.name())))
+                // Verifica el estado del segundo elemento
+                .andExpect(jsonPath("$[1].estado", is(EstadoTicket.HOLD.name())));
+
+        // 3. Verificación en la BD
+        List<Ticket> tickets = ticketRepository.findByFuncion(funcionFutura);
+        assertEquals(2, tickets.size());
+        assertEquals(EstadoTicket.HOLD, tickets.get(0).getEstado());
+        assertEquals(EstadoTicket.HOLD, tickets.get(1).getEstado());
     }
 
     /**
@@ -216,7 +251,8 @@ public class TicketIntegrationTest {
     @WithMockUser(username = "user1@test.com", roles = "USER")
     void test2_ConfirmTicket_HappyFlow() throws Exception {
         // Setup: Crear un hold (se usa el service para obtener el ID rápidamente)
-        Ticket holdTicket = ticketService.createHold(funcionFutura.getId(), List.of(butacaA1.getEtiqueta()), 60, user1.getId());
+        // El service ahora devuelve una lista, tomamos el primer elemento.
+        Ticket holdTicket = ticketService.createHold(funcionFutura.getId(), List.of(butacaA1.getEtiqueta()), user1.getId()).getFirst();
 
         // Acción: Confirmar el hold
         mockMvc.perform(post("/api/tickets/{id}/confirm", holdTicket.getId()))
@@ -236,7 +272,8 @@ public class TicketIntegrationTest {
     @WithMockUser(username = "user1@test.com", roles = "USER")
     void test3_CancelHold_HappyFlow() throws Exception {
         // Setup: Crear un hold para user1
-        Ticket holdTicket = ticketService.createHold(funcionFutura.getId(), List.of(butacaA1.getEtiqueta()), 60, user1.getId());
+        // El service ahora devuelve una lista, tomamos el primer elemento.
+        Ticket holdTicket = ticketService.createHold(funcionFutura.getId(), List.of(butacaA1.getEtiqueta()), user1.getId()).getFirst();
 
         // Acción: Cancelar el hold
         mockMvc.perform(delete("/api/tickets/{id}", holdTicket.getId()))
@@ -255,14 +292,15 @@ public class TicketIntegrationTest {
     /**
      * Error 1: Conflicto de Butaca (Butaca Ocupada/en Hold).
      * Endpoint: POST /api/funciones/{id}/holds
+     * **Verifica que el error ocurre cuando se pide una butaca ya ocupada.**
      */
     @Test
     @WithMockUser(username = "user2@test.com", roles = "USER")
     void test4_CreateHold_ConflictError() throws Exception {
         // Setup: user1 crea un HOLD activo en butaca A1
-        ticketService.createHold(funcionFutura.getId(), List.of(butacaA1.getEtiqueta()), 60, user1.getId());
+        ticketService.createHold(funcionFutura.getId(), List.of(butacaA1.getEtiqueta()), user1.getId());
 
-        // Preparar solicitud de user2 para la misma butaca
+        // Preparar solicitud de user2 para la misma butaca A1
         Map<String, Object> holdRequest = Map.of(
                 "butacas", List.of(butacaA1.getEtiqueta()),
                 "ttlSeconds", 60
@@ -273,6 +311,37 @@ public class TicketIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(holdRequest)))
                 .andExpect(status().isConflict()); // 409 CONFLICT (ButacaOcuadaException)
+    }
+
+    /**
+     * Error 1b: Conflicto de Butaca (Una ocupada, la otra libre).
+     * Endpoint: POST /api/funciones/{id}/holds
+     * **Verifica que si una butaca en la lista está ocupada, la transacción falla por completo.**
+     */
+    @Test
+    @WithMockUser(username = "user2@test.com", roles = "USER")
+    void test4b_CreateHold_PartialConflictError() throws Exception {
+        // Setup: user1 crea un HOLD activo en butaca A1
+        ticketService.createHold(funcionFutura.getId(), List.of(butacaA1.getEtiqueta()), user1.getId());
+
+        // Antes de la acción, solo hay 1 ticket
+        assertEquals(1, ticketRepository.count());
+
+        // Preparar solicitud de user2 para A1 (ocupada) y A2 (libre)
+        Map<String, Object> holdRequest = Map.of(
+                "butacas", List.of(butacaA1.getEtiqueta(), butacaA2.getEtiqueta()),
+                "ttlSeconds", 60
+        );
+
+        // Acción: user2 intenta crear un hold en ambas
+        mockMvc.perform(post("/api/funciones/{id}/holds", funcionFutura.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(holdRequest)))
+                .andExpect(status().isConflict()); // 409 CONFLICT (ButacaOcuadaException)
+
+        // Verificación: Como la operación es @Transactional, NO se debe haber creado el ticket para A2.
+        // El conteo de tickets sigue siendo 1.
+        assertEquals(1, ticketRepository.count(), "La operación transaccional debió revertirse al fallar por A1.");
     }
 
     /**
@@ -304,7 +373,8 @@ public class TicketIntegrationTest {
     @WithMockUser(username = "user2@test.com", roles = "USER") // Autenticado como user2
     void test6_ConfirmTicket_ForbiddenError() throws Exception {
         // Setup: user1 crea un hold activo
-        Ticket holdTicket = ticketService.createHold(funcionFutura.getId(), List.of(butacaA1.getEtiqueta()), 60, user1.getId());
+        // El service ahora devuelve una lista, tomamos el primer elemento.
+        Ticket holdTicket = ticketService.createHold(funcionFutura.getId(), List.of(butacaA1.getEtiqueta()), user1.getId()).getFirst();
 
         // Acción: user2 intenta confirmar el ticket de user1
         mockMvc.perform(post("/api/tickets/{id}/confirm", holdTicket.getId()))
@@ -323,10 +393,10 @@ public class TicketIntegrationTest {
     @WithMockUser(username = "user1@test.com", roles = "USER")
     void test7_ConfirmTicket_ExpiredStateError() throws Exception {
         // Setup: Crear un hold para user1
-        Ticket holdTicket = ticketService.createHold(funcionFutura.getId(), List.of(butacaA1.getEtiqueta()), 60, user1.getId());
+        // El service ahora devuelve una lista, tomamos el primer elemento.
+        Ticket holdTicket = ticketService.createHold(funcionFutura.getId(), List.of(butacaA1.getEtiqueta()), user1.getId()).getFirst();
 
         // **Simular Vencimiento Manual (Precondición para la prueba):**
-        // Como no usamos el perfil de test, simulamos el proceso de limpieza y vencimiento.
         holdTicket.setEstado(EstadoTicket.EXPIRADO);
         ticketRepository.save(holdTicket);
 

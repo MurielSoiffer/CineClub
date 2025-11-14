@@ -1,7 +1,6 @@
-package com.proyect.cineclub.swagger;
+package com.proyect.cineclub.configuration;
 
 import com.proyect.cineclub.dto.TicketDto;
-import com.proyect.cineclub.entity.Usuario;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;

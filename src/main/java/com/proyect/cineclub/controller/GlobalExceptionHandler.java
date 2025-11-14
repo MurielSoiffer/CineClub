@@ -138,4 +138,28 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(body, HttpStatus.UNPROCESSABLE_ENTITY);
     }
+    //Cuando alguna de las butacas no existe al intentar crear el ticket
+    @ExceptionHandler(ButacaInexistenteException.class)
+    public ResponseEntity<Object> handleButacaInexistenteException(ButacaInexistenteException ex) {
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("error", "Bad Request");
+        body.put("message", ex.getMessage());
+        body.put("timestamp", LocalDateTime.now());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+    //Cuando se intentan pedir mas butacas que el maximo al crear el ticket
+    @ExceptionHandler(DemasiadasButacasException.class)
+    public ResponseEntity<Object> handleDemasiadasButacasException(DemasiadasButacasException ex) {
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("error", "Bad Request");
+        body.put("message", ex.getMessage());
+        body.put("timestamp", LocalDateTime.now());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
 }

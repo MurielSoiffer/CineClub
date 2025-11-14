@@ -2,7 +2,7 @@ package com.proyect.cineclub.controller;
 
 import com.proyect.cineclub.dto.UsuarioDto;
 import com.proyect.cineclub.entity.Usuario;
-import com.proyect.cineclub.swagger.UsuarioApi;
+import com.proyect.cineclub.configuration.UsuarioApi;
 import com.proyect.cineclub.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

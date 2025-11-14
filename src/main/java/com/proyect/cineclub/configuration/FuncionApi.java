@@ -1,4 +1,4 @@
-package com.proyect.cineclub.swagger;
+package com.proyect.cineclub.configuration;
 
 import com.proyect.cineclub.dto.FuncionDto;
 import com.proyect.cineclub.dto.HoldRequest;
@@ -206,12 +206,7 @@ public interface FuncionApi {
                     description = "Ejemplo de POST para reservar un ticket",
                     content = @Content(
                             examples = @ExampleObject(
-                                    value = "{\n" +
-                                            "  \"butacas\": [\n" +
-                                            "    \"A-1\"\n" +
-                                            "  ],\n" +
-                                            "  \"ttlSeconds\": 600\n" +
-                                            "}"
+                                    value = "{ \"butacas\": [  \"A-1\", \"A-2\",\"A-3\"]}"
                             )
                     )
             ),
@@ -266,7 +261,7 @@ public interface FuncionApi {
             }
     )
     @PostMapping("/{id}/holds")
-    ResponseEntity<TicketDto> createHold(
+    ResponseEntity<List<TicketDto>> createHold(
             @Parameter(description = "ID de la función.") @PathVariable Long id,
             Authentication authentication,
             @Valid @RequestBody HoldRequest request);

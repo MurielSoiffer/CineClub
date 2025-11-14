@@ -1,20 +1,13 @@
 package com.proyect.cineclub.controller;
 
-import com.proyect.cineclub.dto.FuncionDto;
 import com.proyect.cineclub.dto.TicketDto;
-import com.proyect.cineclub.entity.Funcion;
-import com.proyect.cineclub.entity.Ticket;
 import com.proyect.cineclub.entity.Usuario;
 import com.proyect.cineclub.service.TicketService;
 import com.proyect.cineclub.service.UsuarioService;
-import com.proyect.cineclub.swagger.TicketApi;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import com.proyect.cineclub.configuration.TicketApi;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

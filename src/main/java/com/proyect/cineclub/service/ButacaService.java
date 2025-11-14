@@ -1,6 +1,7 @@
 package com.proyect.cineclub.service;
 
 import com.proyect.cineclub.entity.Butaca;
+import com.proyect.cineclub.entity.Sala;
 import com.proyect.cineclub.exception.RecursoNoEncontradoException;
 import com.proyect.cineclub.repository.ButacaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,8 +40,8 @@ public class ButacaService {
     public Optional<Butaca> getById(Long id){return butacaRepository.findById(id);}
     public List<Butaca> getAllById(List<Long> ids){return butacaRepository.findAllById(ids);}
 
-    public List<Butaca> getAllByEtiqueta(List<String> etiquetas){
-        return butacaRepository.findAllByEtiquetaIn(etiquetas);
+    public List<Butaca> getAllByEtiquetaAndSala(List<String> etiquetas, Sala sala){
+        return butacaRepository.findAllByEtiquetaInAndSala(etiquetas, sala);
     }
     public void deleteById(Long id){butacaRepository.deleteById(id);}
 }

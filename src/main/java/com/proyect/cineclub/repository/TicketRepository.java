@@ -24,6 +24,7 @@ public interface TicketRepository extends JpaRepository<Ticket,Long> {
     Optional<Ticket> findByFuncionAndButaca(Funcion funcion, Butaca butaca);
     List<Ticket> findByEstadoAndHoldExpirationTimeBefore(EstadoTicket estado, Instant holdExpirationTime);
     List<Ticket> findByUsuario(Usuario usuario);
+    List<Ticket> findByFuncion(Funcion funcion);
 
     @Modifying
     @Query("DELETE FROM Ticket t WHERE t.estado IN :estados")

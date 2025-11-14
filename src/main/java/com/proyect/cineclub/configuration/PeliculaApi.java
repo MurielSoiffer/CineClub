@@ -1,4 +1,4 @@
-package com.proyect.cineclub.swagger;
+package com.proyect.cineclub.configuration;
 
 import com.proyect.cineclub.entity.Pelicula;
 import io.swagger.v3.oas.annotations.Operation;

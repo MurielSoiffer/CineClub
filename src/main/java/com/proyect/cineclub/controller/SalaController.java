@@ -4,7 +4,7 @@ import com.proyect.cineclub.dto.SalaDto;
 import com.proyect.cineclub.dto.SalaFiltroDto;
 import com.proyect.cineclub.entity.Butaca;
 import com.proyect.cineclub.entity.Sala;
-import com.proyect.cineclub.swagger.SalaApi;
+import com.proyect.cineclub.configuration.SalaApi;
 import com.proyect.cineclub.repository.SalaRepository;
 import com.proyect.cineclub.service.SalaService;
 import com.proyect.cineclub.specification.SalaSpecificationBuilder;

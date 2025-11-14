@@ -2,7 +2,6 @@ package com.proyect.cineclub.controller;
 
 import com.proyect.cineclub.dto.*;
 import com.proyect.cineclub.entity.*;
-import com.proyect.cineclub.exception.RecursoNoEncontradoException;
 import com.proyect.cineclub.repository.FuncionRepository;
 import com.proyect.cineclub.repository.TicketRepository;
 import com.proyect.cineclub.security.EstadoTicket;
@@ -10,9 +9,7 @@ import com.proyect.cineclub.service.FuncionService;
 import com.proyect.cineclub.service.TicketService;
 import com.proyect.cineclub.service.UsuarioService;
 import com.proyect.cineclub.specification.FuncionSpecificationBuilder;
-import com.proyect.cineclub.specification.SalaSpecificationBuilder;
-import com.proyect.cineclub.swagger.FuncionApi;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import com.proyect.cineclub.configuration.FuncionApi;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -23,13 +20,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.attribute.UserPrincipal;
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -145,7 +137,7 @@ public class FuncionController implements FuncionApi {
     }
 
     @Override
-    public ResponseEntity<TicketDto> createHold(
+    public ResponseEntity<List<TicketDto>> createHold(
             @PathVariable Long id,
             Authentication authentication,
             @Valid @RequestBody HoldRequest request) {
@@ -161,14 +153,14 @@ public class FuncionController implements FuncionApi {
             throw new IllegalStateException("Error al obtener el ID del usuario autenticado.");
         }
 
-        Ticket createdTicket = ticketService.createHold(
+        List<Ticket> createdTickets = ticketService.createHold(
             id,
             request.getButacas(),
-            request.getTtlSeconds(),
             userId
             );
+        List<TicketDto> ticketDtos = createdTickets.stream().map(TicketDto::fromTicket).toList();
         return new ResponseEntity<>(
-                TicketDto.fromTicket(createdTicket),
+                ticketDtos,
                 HttpStatus.CREATED
         );
     }
